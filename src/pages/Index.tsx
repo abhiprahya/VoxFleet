@@ -6,6 +6,11 @@ import { useToast } from '@/hooks/use-toast';
 import VoiceInterface from '@/components/VoiceInterface';
 import FleetDashboard from '@/components/FleetDashboard';
 import RouteOptimizer from '@/components/RouteOptimizer';
+import EmergencyPanel from '@/components/EmergencyPanel';
+import VoiceSearchPanel from '@/components/VoiceSearchPanel';
+import FileUploader from '@/components/FileUploader';
+import { SettingsDialog } from '@/components/dialogs/SettingsDialog';
+import { ShareDialog } from '@/components/dialogs/ShareDialog';
 import { 
   Truck,
   MessageSquare,
@@ -14,7 +19,11 @@ import {
   Bell,
   Activity,
   BarChart3,
-  MapPin
+  MapPin,
+  AlertTriangle,
+  Search,
+  Upload,
+  Share2
 } from 'lucide-react';
 
 interface VoiceResponse {
@@ -30,6 +39,8 @@ const Index = () => {
   const [voiceHistory, setVoiceHistory] = useState<VoiceResponse[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [routeDestination, setRouteDestination] = useState('');
+  const [showSettingsDialog, setShowSettingsDialog] = useState(false);
+  const [showShareDialog, setShowShareDialog] = useState(false);
   const { toast } = useToast();
 
   const processVoiceQuery = async (query: string) => {
@@ -97,9 +108,16 @@ const Index = () => {
     setIsProcessing(false);
   };
 
+  const handleShare = () => {
+    setShowShareDialog(true);
+  };
+
   const tabs = [
     { id: 'dashboard', label: 'Fleet Dashboard', icon: Truck },
     { id: 'routes', label: 'Route Optimizer', icon: Route },
+    { id: 'search', label: 'Advanced Search', icon: Search },
+    { id: 'emergency', label: 'Emergency Center', icon: AlertTriangle },
+    { id: 'upload', label: 'Documents', icon: Upload },
     { id: 'analytics', label: 'Analytics', icon: BarChart3 },
     { id: 'settings', label: 'Settings', icon: Settings },
   ];
@@ -123,6 +141,12 @@ const Index = () => {
             <div className="flex items-center gap-4">
               <Button variant="ghost" size="icon">
                 <Bell className="h-5 w-5" />
+              </Button>
+              <Button variant="ghost" size="icon" onClick={handleShare}>
+                <Share2 className="h-5 w-5" />
+              </Button>
+              <Button variant="ghost" size="icon" onClick={() => setShowSettingsDialog(true)}>
+                <Settings className="h-5 w-5" />
               </Button>
               <Badge variant="outline" className="flex items-center gap-1">
                 <Activity className="h-3 w-3" />
@@ -195,6 +219,18 @@ const Index = () => {
               <RouteOptimizer destination={routeDestination} />
             )}
 
+            {activeTab === 'search' && (
+              <VoiceSearchPanel />
+            )}
+
+            {activeTab === 'emergency' && (
+              <EmergencyPanel />
+            )}
+
+            {activeTab === 'upload' && (
+              <FileUploader />
+            )}
+
             {activeTab === 'analytics' && (
               <Card className="shadow-card">
                 <CardHeader>
@@ -238,7 +274,13 @@ const Index = () => {
                       <p className="text-sm text-muted-foreground mb-2">
                         Configure voice recognition and speech synthesis
                       </p>
-                      <Button variant="outline" size="sm">Configure Voice</Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => setShowSettingsDialog(true)}
+                      >
+                        Configure Voice
+                      </Button>
                     </div>
                     
                     <div>
@@ -246,7 +288,13 @@ const Index = () => {
                       <p className="text-sm text-muted-foreground mb-2">
                         Connect to fleet management systems and routing APIs
                       </p>
-                      <Button variant="outline" size="sm">API Settings</Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => setShowSettingsDialog(true)}
+                      >
+                        API Settings
+                      </Button>
                     </div>
                     
                     <div>
@@ -254,7 +302,13 @@ const Index = () => {
                       <p className="text-sm text-muted-foreground mb-2">
                         Configure alerts and notification preferences
                       </p>
-                      <Button variant="outline" size="sm">Notification Settings</Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => setShowSettingsDialog(true)}
+                      >
+                        Notification Settings
+                      </Button>
                     </div>
                   </div>
                 </CardContent>
@@ -263,6 +317,21 @@ const Index = () => {
           </div>
         </div>
       </div>
+
+      <SettingsDialog
+        open={showSettingsDialog}
+        onOpenChange={setShowSettingsDialog}
+      />
+
+      <ShareDialog
+        open={showShareDialog}
+        onOpenChange={setShowShareDialog}
+        shareData={{
+          title: "VoxFleet Dashboard Summary",
+          content: `Fleet Status Report\nActive Trucks: ${voiceHistory.length > 0 ? 'Multiple' : 'Monitoring'}\nLast Updated: ${new Date().toLocaleString()}\nSystem Status: Online`,
+          url: window.location.href
+        }}
+      />
     </div>
   );
 };

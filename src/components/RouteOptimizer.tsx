@@ -3,6 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { RerouteDialog } from './dialogs/RerouteDialog';
+import { ShareDialog } from './dialogs/ShareDialog';
+import { useToast } from '@/hooks/use-toast';
 import { 
   Route,
   MapPin,
@@ -11,7 +14,8 @@ import {
   Navigation,
   Zap,
   AlertCircle,
-  TrendingUp
+  TrendingUp,
+  Share2
 } from 'lucide-react';
 
 interface RouteOption {
@@ -74,6 +78,10 @@ export const RouteOptimizer: React.FC<RouteOptimizerProps> = ({ destination }) =
   const [targetDestination, setTargetDestination] = useState(destination || '');
   const [routeOptions, setRouteOptions] = useState<RouteOption[]>(mockRouteOptions);
   const [isOptimizing, setIsOptimizing] = useState(false);
+  const [showRerouteDialog, setShowRerouteDialog] = useState(false);
+  const [showShareDialog, setShowShareDialog] = useState(false);
+  const [selectedTruck, setSelectedTruck] = useState<RouteOption | null>(null);
+  const { toast } = useToast();
 
   const handleOptimize = async () => {
     if (!targetDestination.trim()) return;
@@ -230,12 +238,28 @@ export const RouteOptimizer: React.FC<RouteOptimizerProps> = ({ destination }) =
                       </div>
                     </div>
 
-                    <Button 
-                      variant={index === 0 ? "default" : "outline"}
-                      size="sm"
-                    >
-                      {index === 0 ? "Assign Route" : "Select"}
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button 
+                        variant={index === 0 ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => {
+                          setSelectedTruck(option);
+                          setShowRerouteDialog(true);
+                        }}
+                      >
+                        {index === 0 ? "Assign Route" : "Select"}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedTruck(option);
+                          setShowShareDialog(true);
+                        }}
+                      >
+                        <Share2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -249,6 +273,28 @@ export const RouteOptimizer: React.FC<RouteOptimizerProps> = ({ destination }) =
           )}
         </CardContent>
       </Card>
+
+      {selectedTruck && (
+        <>
+          <RerouteDialog
+            open={showRerouteDialog}
+            onOpenChange={setShowRerouteDialog}
+            truckNumber={selectedTruck.truckNumber}
+            currentLocation={selectedTruck.currentLocation}
+            destination={targetDestination || "Selected Destination"}
+          />
+
+          <ShareDialog
+            open={showShareDialog}
+            onOpenChange={setShowShareDialog}
+            shareData={{
+              title: `Route Optimization for ${selectedTruck.truckNumber}`,
+              content: `Truck: ${selectedTruck.truckNumber}\nDriver: ${selectedTruck.driver}\nETA: ${selectedTruck.estimatedTime}\nDistance: ${selectedTruck.distance}km\nRoute: ${selectedTruck.routeDescription}`,
+              url: `${window.location.origin}/#route-${selectedTruck.id}`
+            }}
+          />
+        </>
+      )}
     </div>
   );
 };
